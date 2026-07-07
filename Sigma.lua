@@ -3,6 +3,7 @@ local RunService    = game:GetService("RunService")
 local SoundService  = game:GetService("SoundService")
 local GuiService    = game:GetService("GuiService")
 local StarterGui    = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
 local ContextActionService = game:GetService("ContextActionService")
 
 local player = Players.LocalPlayer
@@ -34,14 +35,35 @@ local function mount(gui)
 	end
 end
 
+local blockedKeys = {
+	[Enum.KeyCode.Escape] = true,
+	[Enum.KeyCode.Return] = true,
+	[Enum.KeyCode.KeypadEnter] = true,
+	[Enum.KeyCode.ButtonStart] = true,
+	[Enum.KeyCode.ButtonSelect] = true,
+	[Enum.KeyCode.ButtonB] = true,
+	[Enum.KeyCode.ButtonA] = true,
+}
+
 ContextActionService:BindActionAtPriority(
-	"M7_BlockEscape",
+	"M7_BlockMenuKeys",
 	function() return Enum.ContextActionResult.Sink end,
 	false,
 	Enum.ContextActionPriority.High.Value + 1000,
 	Enum.KeyCode.Escape,
-	Enum.KeyCode.ButtonStart
+	Enum.KeyCode.Return,
+	Enum.KeyCode.KeypadEnter,
+	Enum.KeyCode.ButtonStart,
+	Enum.KeyCode.ButtonSelect,
+	Enum.KeyCode.ButtonB,
+	Enum.KeyCode.ButtonA
 )
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if blockedKeys[input.KeyCode] then
+		pcall(function() GuiService:SetMenuIsOpen(false) end)
+	end
+end)
 
 pcall(function()
 	GuiService.MenuOpened:Connect(function()
@@ -54,7 +76,8 @@ task.spawn(function()
 		pcall(function() GuiService:SetMenuIsOpen(false) end)
 		pcall(function() StarterGui:SetCore("TopbarEnabled", false) end)
 		pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false) end)
-		task.wait(0.05)
+		pcall(function() StarterGui:SetCore("ResetButtonCallback", false) end)
+		task.wait(0.02)
 	end
 end)
 
@@ -316,15 +339,15 @@ local function spawnPopup()
 end
 
 spawnPopup()
-for i = 1, 5 do
-	task.delay(i * 0.2, spawnPopup)
+for i = 1, 8 do
+	task.delay(i * 0.1, spawnPopup)
 end
 
 task.spawn(function()
-	local interval = 0.5
+	local interval = 0.25
 	while true do
 		task.wait(interval)
 		spawnPopup()
-		interval = math.max(0.03, interval * 0.96)
+		interval = math.max(0.02, interval * 0.94)
 	end
 end)
