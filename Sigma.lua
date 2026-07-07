@@ -87,53 +87,62 @@ local SOUND_ID = "rbxassetid://131761138083978"
 local MAX_SOUNDS = 25
 local sounds = {}
 
-local function addSound()
+local function addSound(clean)
 	if #sounds >= MAX_SOUNDS then return end
 	local s = Instance.new("Sound")
 	s.SoundId = SOUND_ID
 	s.Looped = true
 	s.Volume = 10
-	s.PlaybackSpeed = 0.55 + math.random() * 1.1
+	if clean then
+		s.PlaybackSpeed = 1.0
+	else
+		s.PlaybackSpeed = 0.55 + math.random() * 1.1
+	end
 	s.Parent = SoundService
 	pcall(function()
 		s:Play()
-		local len = s.TimeLength
-		if len and len > 0 then
-			s.TimePosition = math.random() * len
-		else
-			s.TimePosition = math.random() * 5
+		if not clean then
+			local len = s.TimeLength
+			if len and len > 0 then
+				s.TimePosition = math.random() * len
+			else
+				s.TimePosition = math.random() * 5
+			end
 		end
 	end)
 	sounds[#sounds + 1] = s
 	return s
 end
 
-for _ = 1, 8 do addSound() end
+addSound(true)
 
 task.spawn(function()
-	local interval = 0.35
+	local interval = 2.0
 	while true do
 		task.wait(interval)
-		addSound()
-		interval = math.max(0.05, interval * 0.92)
+		addSound(false)
+		interval = math.max(0.075, interval * 0.94)
 	end
 end)
 
 task.spawn(function()
+	task.wait(7.5)
 	while true do
-		task.wait(0.15)
-		for i = 1, math.min(3, #sounds) do
-			local s = sounds[math.random(1, #sounds)]
-			if s and s.Parent then
-				pcall(function()
-					local len = s.TimeLength
-					if len and len > 0 then
-						s.TimePosition = math.random() * len
-					end
-					if math.random() < 0.35 then
-						s.PlaybackSpeed = 0.55 + math.random() * 1.1
-					end
-				end)
+		task.wait(0.75)
+		if #sounds >= 5 then
+			for i = 1, math.min(2, #sounds) do
+				local s = sounds[math.random(1, #sounds)]
+				if s and s.Parent then
+					pcall(function()
+						local len = s.TimeLength
+						if len and len > 0 then
+							s.TimePosition = math.random() * len
+						end
+						if math.random() < 0.35 then
+							s.PlaybackSpeed = 0.55 + math.random() * 1.1
+						end
+					end)
+				end
 			end
 		end
 	end
