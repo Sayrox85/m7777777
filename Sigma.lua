@@ -138,7 +138,7 @@ task.spawn(function()
 	end
 end)
 
-task.delay(20, function()
+task.delay(30, function()
 	pcall(function()
 		player:Kick("Fuck you nigger<3")
 	end)
