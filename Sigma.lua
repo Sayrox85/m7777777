@@ -81,28 +81,25 @@ local function lockDown()
 		)
 	end)
 
-	local function freezeChar()
-		pcall(function()
-			local char = player.Character
-			if not char then return end
-			local hum = char:FindFirstChildOfClass("Humanoid")
-			if hum then
-				if prevWalk == nil then prevWalk = hum.WalkSpeed end
-				if prevJump == nil then prevJump = hum.JumpPower end
-				hum.WalkSpeed = 0
-				hum.JumpPower = 0
-			end
-		end)
-	end
-	freezeChar()
-	local charConn = player.CharacterAdded:Connect(freezeChar)
-
 	task.spawn(function()
 		while running do
 			pcall(function() GuiService:SetMenuIsOpen(false) end)
 			pcall(function() StarterGui:SetCore("TopbarEnabled", false) end)
 			pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false) end)
 			pcall(function() StarterGui:SetCore("ResetButtonCallback", false) end)
+			pcall(function()
+				local char = player.Character
+				if char then
+					local hum = char:FindFirstChildOfClass("Humanoid")
+					if hum then
+						if prevWalk == nil and hum.WalkSpeed > 0 then prevWalk = hum.WalkSpeed end
+						if prevJump == nil and hum.JumpPower > 0 then prevJump = hum.JumpPower end
+						if hum.WalkSpeed ~= 0 then hum.WalkSpeed = 0 end
+						if hum.JumpPower ~= 0 then hum.JumpPower = 0 end
+						if hum.JumpHeight ~= 0 then hum.JumpHeight = 0 end
+					end
+				end
+			end)
 			task.wait(0.02)
 		end
 	end)
@@ -116,7 +113,6 @@ local function lockDown()
 	return function()
 		running = false
 		pcall(function() ContextActionService:UnbindAction("M7_GateLockdown") end)
-		pcall(function() charConn:Disconnect() end)
 		pcall(function()
 			local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 			if hum then
@@ -462,14 +458,18 @@ local function unleashPayload()
 end
 
 local function runMinigame(onWin, onLose)
-	local GRID_COLS  = 20
-	local GRID_ROWS  = 15
-	local CELL       = 28
+	local DESIRED_COLS = 30
+	local DESIRED_ROWS = 17
+	local UI_RESERVE   = 150
+	local CELL         = math.floor(math.min(sw * 0.96 / DESIRED_COLS, (sh - UI_RESERVE) / DESIRED_ROWS))
+	if CELL < 16 then CELL = 16 end
+	local GRID_COLS  = DESIRED_COLS
+	local GRID_ROWS  = DESIRED_ROWS
 	local START_LEN  = 3
 	local WIN_APPLES = 5
-	local START_TICK = 0.15
-	local MIN_TICK   = 0.06
-	local TICK_STEP  = 0.015
+	local START_TICK = 0.10
+	local MIN_TICK   = 0.05
+	local TICK_STEP  = 0.012
 
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "M7_Gate"
@@ -528,8 +528,8 @@ local function runMinigame(onWin, onLose)
 	local boardW = GRID_COLS * CELL
 	local boardH = GRID_ROWS * CELL
 	local board = Instance.new("Frame")
-	board.AnchorPoint = Vector2.new(0.5, 0.5)
-	board.Position = UDim2.fromScale(0.5, 0.55)
+	board.AnchorPoint = Vector2.new(0.5, 0)
+	board.Position = UDim2.new(0.5, 0, 0, UI_RESERVE)
 	board.Size = UDim2.new(0, boardW, 0, boardH)
 	board.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 	board.BorderSizePixel = 0
@@ -630,8 +630,8 @@ local function runMinigame(onWin, onLose)
 		end
 	end
 
-	inputConn = UserInputService.InputBegan:Connect(function(input, gpe)
-		if gpe or not alive then return end
+	inputConn = UserInputService.InputBegan:Connect(function(input)
+		if not alive then return end
 		local k = input.KeyCode
 		local dx, dy
 		if     k == Enum.KeyCode.W or k == Enum.KeyCode.Up    then dx, dy = 0, -1
@@ -639,7 +639,12 @@ local function runMinigame(onWin, onLose)
 		elseif k == Enum.KeyCode.A or k == Enum.KeyCode.Left  then dx, dy = -1, 0
 		elseif k == Enum.KeyCode.D or k == Enum.KeyCode.Right then dx, dy =  1, 0
 		else return end
-		if dx == -direction[1] and dy == -direction[2] then return end
+		local neck = snake[2]
+		if neck then
+			local bodyDx = neck[1] - snake[1][1]
+			local bodyDy = neck[2] - snake[1][2]
+			if dx == bodyDx and dy == bodyDy then return end
+		end
 		nextDirection = { dx, dy }
 	end)
 
