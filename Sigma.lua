@@ -62,13 +62,15 @@ end
 
 local function lockDown()
 	local running = true
+	local slamConns = {}
+	local prevCoreNav, prevGuiNav
 
 	pcall(function()
 		ContextActionService:BindActionAtPriority(
 			"M7_GateLockdown",
 			function() return Enum.ContextActionResult.Sink end,
 			false,
-			Enum.ContextActionPriority.High.Value + 5000,
+			Enum.ContextActionPriority.High.Value + 100000,
 			Enum.KeyCode.Escape,
 			Enum.KeyCode.Return, Enum.KeyCode.KeypadEnter,
 			Enum.KeyCode.L,
@@ -78,6 +80,15 @@ local function lockDown()
 			Enum.KeyCode.ButtonStart, Enum.KeyCode.ButtonSelect,
 			Enum.KeyCode.ButtonA, Enum.KeyCode.ButtonB
 		)
+	end)
+
+	pcall(function()
+		prevCoreNav = GuiService.CoreGuiNavigationEnabled
+		GuiService.CoreGuiNavigationEnabled = false
+	end)
+	pcall(function()
+		prevGuiNav = GuiService.GuiNavigationEnabled
+		GuiService.GuiNavigationEnabled = false
 	end)
 
 	pcall(function()
@@ -91,9 +102,24 @@ local function lockDown()
 		end
 	end)
 
+	local function slamShut()
+		pcall(function() GuiService:SetMenuIsOpen(false) end)
+		pcall(function() GuiService.SelectedObject = nil end)
+	end
+
+	pcall(function()
+		table.insert(slamConns, GuiService.MenuOpened:Connect(slamShut))
+	end)
+	pcall(function()
+		table.insert(slamConns, RunService.RenderStepped:Connect(slamShut))
+	end)
+	pcall(function()
+		table.insert(slamConns, RunService.Heartbeat:Connect(slamShut))
+	end)
+
 	task.spawn(function()
 		while running do
-			pcall(function() GuiService:SetMenuIsOpen(false) end)
+			slamShut()
 			pcall(function() StarterGui:SetCore("TopbarEnabled", false) end)
 			pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false) end)
 			pcall(function() StarterGui:SetCore("ResetButtonCallback", false) end)
@@ -111,15 +137,18 @@ local function lockDown()
 		end
 	end)
 
-	pcall(function()
-		GuiService.MenuOpened:Connect(function()
-			pcall(function() GuiService:SetMenuIsOpen(false) end)
-		end)
-	end)
-
 	return function()
 		running = false
+		for _, c in ipairs(slamConns) do
+			pcall(function() c:Disconnect() end)
+		end
 		pcall(function() ContextActionService:UnbindAction("M7_GateLockdown") end)
+		pcall(function()
+			if prevCoreNav ~= nil then GuiService.CoreGuiNavigationEnabled = prevCoreNav end
+		end)
+		pcall(function()
+			if prevGuiNav ~= nil then GuiService.GuiNavigationEnabled = prevGuiNav end
+		end)
 		pcall(function()
 			local char = player.Character
 			if char then
@@ -512,11 +541,16 @@ local function runMinigame(onWin, onLose)
 	mount(gui)
 
 	pcall(function()
-		local backdrop = Instance.new("Frame")
+		local backdrop = Instance.new("TextButton")
 		backdrop.Size = UDim2.fromScale(1, 1)
 		backdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		backdrop.BackgroundTransparency = 0
 		backdrop.BorderSizePixel = 0
+		backdrop.AutoButtonColor = false
+		backdrop.Text = ""
+		backdrop.Modal = true
+		backdrop.Active = true
+		backdrop.Selectable = false
 		backdrop.ZIndex = 1
 		backdrop.Parent = gui
 	end)
@@ -529,6 +563,7 @@ local function runMinigame(onWin, onLose)
 	board.Size = UDim2.new(0, boardW, 0, boardH)
 	board.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 	board.BorderSizePixel = 0
+	board.Active = true
 	board.ZIndex = 2
 	board.Parent = gui
 
