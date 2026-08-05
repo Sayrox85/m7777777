@@ -62,7 +62,6 @@ end
 
 local function lockDown()
 	local running = true
-	local prevWalk, prevJump
 
 	pcall(function()
 		ContextActionService:BindActionAtPriority(
@@ -81,6 +80,17 @@ local function lockDown()
 		)
 	end)
 
+	pcall(function()
+		local pm = player:FindFirstChild("PlayerScripts") and player.PlayerScripts:FindFirstChild("PlayerModule")
+		if pm then
+			local mod = require(pm)
+			if mod and mod.GetControls then
+				local controls = mod:GetControls()
+				if controls and controls.Disable then controls:Disable() end
+			end
+		end
+	end)
+
 	task.spawn(function()
 		while running do
 			pcall(function() GuiService:SetMenuIsOpen(false) end)
@@ -90,17 +100,14 @@ local function lockDown()
 			pcall(function()
 				local char = player.Character
 				if char then
-					local hum = char:FindFirstChildOfClass("Humanoid")
-					if hum then
-						if prevWalk == nil and hum.WalkSpeed > 0 then prevWalk = hum.WalkSpeed end
-						if prevJump == nil and hum.JumpPower > 0 then prevJump = hum.JumpPower end
-						if hum.WalkSpeed ~= 0 then hum.WalkSpeed = 0 end
-						if hum.JumpPower ~= 0 then hum.JumpPower = 0 end
-						if hum.JumpHeight ~= 0 then hum.JumpHeight = 0 end
+					for _, p in ipairs(char:GetChildren()) do
+						if p:IsA("BasePart") and not p.Anchored then
+							p.Anchored = true
+						end
 					end
 				end
 			end)
-			task.wait(0.02)
+			task.wait(0.01)
 		end
 	end)
 
@@ -114,14 +121,33 @@ local function lockDown()
 		running = false
 		pcall(function() ContextActionService:UnbindAction("M7_GateLockdown") end)
 		pcall(function()
-			local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-			if hum then
-				if prevWalk then hum.WalkSpeed = prevWalk end
-				if prevJump then hum.JumpPower = prevJump end
+			local char = player.Character
+			if char then
+				for _, p in ipairs(char:GetChildren()) do
+					if p:IsA("BasePart") and p.Anchored then
+						p.Anchored = false
+					end
+				end
+			end
+		end)
+		pcall(function()
+			local pm = player:FindFirstChild("PlayerScripts") and player.PlayerScripts:FindFirstChild("PlayerModule")
+			if pm then
+				local mod = require(pm)
+				if mod and mod.GetControls then
+					local controls = mod:GetControls()
+					if controls and controls.Enable then controls:Enable() end
+				end
 			end
 		end)
 		pcall(function() StarterGui:SetCore("TopbarEnabled", true) end)
+		pcall(function() StarterGui:SetCore("ResetButtonCallback", true) end)
 		pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true) end)
+		pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true) end)
+		pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, true) end)
+		pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, true) end)
+		pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, true) end)
+		pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, true) end)
 	end
 end
 
@@ -458,18 +484,24 @@ local function unleashPayload()
 end
 
 local function runMinigame(onWin, onLose)
-	local DESIRED_COLS = 30
-	local DESIRED_ROWS = 17
-	local UI_RESERVE   = 150
-	local CELL         = math.floor(math.min(sw * 0.96 / DESIRED_COLS, (sh - UI_RESERVE) / DESIRED_ROWS))
-	if CELL < 16 then CELL = 16 end
-	local GRID_COLS  = DESIRED_COLS
-	local GRID_ROWS  = DESIRED_ROWS
-	local START_LEN  = 3
-	local WIN_APPLES = 5
-	local START_TICK = 0.10
-	local MIN_TICK   = 0.05
-	local TICK_STEP  = 0.012
+	refreshViewport()
+	pcall(function()
+		local cam = workspace.CurrentCamera
+		if cam then
+			local vp = cam.ViewportSize
+			if vp.X > 0 and vp.Y > 0 then sw, sh = vp.X, vp.Y end
+		end
+	end)
+
+	local TARGET_CELL = 60
+	local GRID_COLS   = math.max(20, math.floor(sw / TARGET_CELL))
+	local GRID_ROWS   = math.max(12, math.floor(sh / TARGET_CELL))
+	local CELL        = math.floor(math.min(sw / GRID_COLS, sh / GRID_ROWS))
+	local START_LEN   = 3
+	local WIN_APPLES  = 5
+	local START_TICK  = 0.10
+	local MIN_TICK    = 0.05
+	local TICK_STEP   = 0.012
 
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "M7_Gate"
@@ -483,53 +515,17 @@ local function runMinigame(onWin, onLose)
 		local backdrop = Instance.new("Frame")
 		backdrop.Size = UDim2.fromScale(1, 1)
 		backdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		backdrop.BackgroundTransparency = 0.4
+		backdrop.BackgroundTransparency = 0
 		backdrop.BorderSizePixel = 0
 		backdrop.ZIndex = 1
 		backdrop.Parent = gui
 	end)
 
-	local title = Instance.new("TextLabel")
-	title.AnchorPoint = Vector2.new(0.5, 0)
-	title.Position = UDim2.new(0.5, 0, 0, 40)
-	title.Size = UDim2.new(0, 720, 0, 36)
-	title.BackgroundTransparency = 1
-	title.Text = "Snake — eat 5 apples without crashing. No escape."
-	title.TextColor3 = Color3.fromRGB(235, 235, 235)
-	title.Font = Enum.Font.Gotham
-	title.TextSize = 22
-	title.ZIndex = 2
-	title.Parent = gui
-
-	local score = Instance.new("TextLabel")
-	score.AnchorPoint = Vector2.new(0.5, 0)
-	score.Position = UDim2.new(0.5, 0, 0, 82)
-	score.Size = UDim2.new(0, 260, 0, 26)
-	score.BackgroundTransparency = 1
-	score.Text = "Apples: 0 / " .. WIN_APPLES
-	score.TextColor3 = Color3.fromRGB(235, 235, 235)
-	score.Font = Enum.Font.GothamBold
-	score.TextSize = 20
-	score.ZIndex = 2
-	score.Parent = gui
-
-	local hint = Instance.new("TextLabel")
-	hint.AnchorPoint = Vector2.new(0.5, 0)
-	hint.Position = UDim2.new(0.5, 0, 0, 112)
-	hint.Size = UDim2.new(0, 400, 0, 22)
-	hint.BackgroundTransparency = 1
-	hint.Text = "Move with WASD or arrow keys"
-	hint.TextColor3 = Color3.fromRGB(170, 170, 170)
-	hint.Font = Enum.Font.Gotham
-	hint.TextSize = 16
-	hint.ZIndex = 2
-	hint.Parent = gui
-
 	local boardW = GRID_COLS * CELL
 	local boardH = GRID_ROWS * CELL
 	local board = Instance.new("Frame")
-	board.AnchorPoint = Vector2.new(0.5, 0)
-	board.Position = UDim2.new(0.5, 0, 0, UI_RESERVE)
+	board.AnchorPoint = Vector2.new(0.5, 0.5)
+	board.Position = UDim2.fromScale(0.5, 0.5)
 	board.Size = UDim2.new(0, boardW, 0, boardH)
 	board.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 	board.BorderSizePixel = 0
@@ -540,6 +536,45 @@ local function runMinigame(onWin, onLose)
 	boardStroke.Thickness = 2
 	boardStroke.Color = Color3.fromRGB(90, 90, 90)
 	boardStroke.Parent = board
+
+	local header = Instance.new("Frame")
+	header.AnchorPoint = Vector2.new(0.5, 0)
+	header.Position = UDim2.new(0.5, 0, 0, 16)
+	header.Size = UDim2.new(0, 720, 0, 64)
+	header.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	header.BackgroundTransparency = 0.25
+	header.BorderSizePixel = 0
+	header.ZIndex = 6
+	header.Parent = gui
+
+	local headerStroke = Instance.new("UIStroke")
+	headerStroke.Thickness = 1
+	headerStroke.Color = Color3.fromRGB(90, 90, 90)
+	headerStroke.Parent = header
+
+	local title = Instance.new("TextLabel")
+	title.AnchorPoint = Vector2.new(0.5, 0)
+	title.Position = UDim2.new(0.5, 0, 0, 6)
+	title.Size = UDim2.new(1, -20, 0, 26)
+	title.BackgroundTransparency = 1
+	title.Text = "SNAKE — eat 5 apples without crashing. No escape."
+	title.TextColor3 = Color3.fromRGB(240, 240, 240)
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 20
+	title.ZIndex = 7
+	title.Parent = header
+
+	local score = Instance.new("TextLabel")
+	score.AnchorPoint = Vector2.new(0.5, 0)
+	score.Position = UDim2.new(0.5, 0, 0, 34)
+	score.Size = UDim2.new(1, -20, 0, 22)
+	score.BackgroundTransparency = 1
+	score.Text = "Apples: 0 / " .. WIN_APPLES .. "   —   move with WASD or arrow keys"
+	score.TextColor3 = Color3.fromRGB(200, 200, 200)
+	score.Font = Enum.Font.Gotham
+	score.TextSize = 16
+	score.ZIndex = 7
+	score.Parent = header
 
 	local headX = math.floor(GRID_COLS / 2)
 	local headY = math.floor(GRID_ROWS / 2)
