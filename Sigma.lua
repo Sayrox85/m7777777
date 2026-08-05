@@ -557,7 +557,7 @@ local function runMinigame(onWin, onLose)
 	title.Position = UDim2.new(0.5, 0, 0, 6)
 	title.Size = UDim2.new(1, -20, 0, 26)
 	title.BackgroundTransparency = 1
-	title.Text = "SNAKE — eat 5 apples without crashing. No escape."
+	title.Text = "eat 5 apples to win big boy"
 	title.TextColor3 = Color3.fromRGB(240, 240, 240)
 	title.Font = Enum.Font.GothamBold
 	title.TextSize = 20
@@ -569,7 +569,7 @@ local function runMinigame(onWin, onLose)
 	score.Position = UDim2.new(0.5, 0, 0, 34)
 	score.Size = UDim2.new(1, -20, 0, 22)
 	score.BackgroundTransparency = 1
-	score.Text = "Apples: 0 / " .. WIN_APPLES .. "   —   move with WASD or arrow keys"
+	score.Text = "Apples: 0 / " .. WIN_APPLES .. "  move with WASD or arrow keys"
 	score.TextColor3 = Color3.fromRGB(200, 200, 200)
 	score.Font = Enum.Font.Gotham
 	score.TextSize = 16
