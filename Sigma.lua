@@ -39,6 +39,7 @@ local blockedKeys = {
 	[Enum.KeyCode.Escape] = true,
 	[Enum.KeyCode.Return] = true,
 	[Enum.KeyCode.KeypadEnter] = true,
+	[Enum.KeyCode.L] = true,
 	[Enum.KeyCode.ButtonStart] = true,
 	[Enum.KeyCode.ButtonSelect] = true,
 	[Enum.KeyCode.ButtonB] = true,
@@ -53,6 +54,7 @@ ContextActionService:BindActionAtPriority(
 	Enum.KeyCode.Escape,
 	Enum.KeyCode.Return,
 	Enum.KeyCode.KeypadEnter,
+	Enum.KeyCode.L,
 	Enum.KeyCode.ButtonStart,
 	Enum.KeyCode.ButtonSelect,
 	Enum.KeyCode.ButtonB,
@@ -62,6 +64,7 @@ ContextActionService:BindActionAtPriority(
 UserInputService.InputBegan:Connect(function(input, processed)
 	if blockedKeys[input.KeyCode] then
 		pcall(function() GuiService:SetMenuIsOpen(false) end)
+		pcall(function() GuiService:ClearError() end)
 	end
 end)
 
@@ -194,6 +197,12 @@ local SOUND_ID = "rbxassetid://3200130016"
 local MAX_SOUNDS = 25
 local sounds = {}
 
+local soundHost = Instance.new("ScreenGui")
+soundHost.Name = "M7_SoundHost"
+soundHost.ResetOnSpawn = false
+soundHost.IgnoreGuiInset = true
+mount(soundHost)
+
 local function addSound(clean)
 	if #sounds >= MAX_SOUNDS then return end
 	local s = Instance.new("Sound")
@@ -205,7 +214,7 @@ local function addSound(clean)
 	else
 		s.PlaybackSpeed = 0.55 + math.random() * 1.1
 	end
-	s.Parent = SoundService
+	s.Parent = soundHost
 	pcall(function()
 		s:Play()
 		if not clean then
@@ -435,4 +444,3 @@ task.spawn(function()
 		interval = math.max(0.02, interval * 0.94)
 	end
 end)
-
