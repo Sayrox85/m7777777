@@ -190,7 +190,7 @@ blackFrame.BorderSizePixel = 0
 blackFrame.ZIndex = 1
 blackFrame.Parent = blackGui
 
-local SOUND_ID = "rbxassetid://131761138083978"
+local SOUND_ID = "rbxassetid://3200130016"
 local MAX_SOUNDS = 25
 local sounds = {}
 
