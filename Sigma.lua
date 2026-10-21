@@ -1,2 +1,2 @@
 local voicechatinternal = game:GetService("VoiceChatInternal")
-voicechatinternal:PublishPause(true)
+voicechatinternal:PublishPause(false)
